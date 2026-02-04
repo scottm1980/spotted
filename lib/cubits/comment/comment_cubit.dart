@@ -82,8 +82,8 @@ class CommentCubit extends Cubit<CommentState> {
       );
       final mentionReplacedText = _repository.replaceMentionsInAComment(
           comment: text, mentions: mentions);
-      await _repository.postComment(
-          text: mentionReplacedText, videoId: _videoId, mentions: mentions);
+      final finalComment = comment.copyWith(text: mentionReplacedText);
+      await _repository.postComment(finalComment);
     } catch (err) {
       emit(CommentError(message: 'Error commenting.'));
     }

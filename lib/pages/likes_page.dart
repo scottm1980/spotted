@@ -9,7 +9,7 @@ import 'package:spot/utils/constants.dart';
 /// Page that displays list of videos liked by a certain user.
 class LikesPage extends StatelessWidget {
   /// Page that displays list of videos liked by a certain user.
-  const LikesPage({Key? key}) : super(key: key);
+  const LikesPage({super.key});
 
   /// Name of this page within `RouteSettinngs`
   static const name = 'LikesPage';

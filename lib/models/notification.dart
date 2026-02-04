@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 /// Enum of different notification types.
@@ -101,7 +102,9 @@ class AppNotification {
   }) {
     return data.map<AppNotification>(
       (row) {
-        final createdAt = DateTime.parse(row['created_at'] as String);
+        final createdAt = (row['created_at'] is Timestamp)
+            ? (row['created_at'] as Timestamp).toDate()
+            : DateTime.parse(row['created_at'] as String);
         var isNew = false;
         if (createdAtOfLastSeenNotification == null ||
             createdAt.isAfter(createdAtOfLastSeenNotification)) {

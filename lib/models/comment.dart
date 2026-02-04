@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:spot/models/profile.dart';
 
 /// Represents a single comment created by a user.
@@ -33,11 +34,13 @@ class Comment {
         .map((row) => Comment(
               id: row['id'] as String,
               text: row['text'] as String,
-              createdAt: DateTime.parse(row['created_at'] as String),
+              createdAt: (row['created_at'] is Timestamp)
+                  ? (row['created_at'] as Timestamp).toDate()
+                  : DateTime.parse(row['created_at'] as String),
               videoId: row['video_id'] as String,
               user: Profile(
                 id: row['user_id'] as String,
-                name: row['user_name'] as String,
+                name: row['user_name'] as String? ?? '',
                 description: row['user_description'] as String?,
                 imageUrl: row['user_image_url'] as String?,
               ),
@@ -72,5 +75,15 @@ class Comment {
       videoId: videoId ?? this.videoId,
       user: user ?? this.user,
     );
+  }
+
+  /// Converts Comment to Map.
+  Map<String, dynamic> toMap() {
+    return {
+      'text': text,
+      'video_id': videoId,
+      'user_id': user.id,
+      'created_at': createdAt,
+    };
   }
 }

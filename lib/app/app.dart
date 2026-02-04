@@ -1,7 +1,10 @@
 // ignore_for_file: public_member_api_docs
 
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
-import 'package:firebase_analytics/observer.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -10,17 +13,17 @@ import 'package:spot/cubits/notification/notification_cubit.dart';
 import 'package:spot/data_profiders/location_provider.dart';
 import 'package:spot/pages/tab_page.dart';
 import 'package:spot/repositories/repository.dart';
-import 'package:supabase/supabase.dart';
 
 class App extends StatelessWidget {
-  App({Key? key}) : super(key: key);
+  const App({super.key});
 
-  static const _supabaseUrl = String.fromEnvironment('SUPABASE_URL');
-  static const _supabaseannonKey = String.fromEnvironment('SUPABASE_ANNON_KEY');
-  final _supabaseClient = SupabaseClient(_supabaseUrl, _supabaseannonKey);
-  final _analytics = FirebaseAnalytics();
-  final _localStorage = const FlutterSecureStorage();
-  final _locationProvider = LocationProvider();
+  static final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
+  static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  static final FirebaseStorage _storage = FirebaseStorage.instance;
+  static final FirebaseFunctions _functions = FirebaseFunctions.instance;
+  static final FirebaseAnalytics _analytics = FirebaseAnalytics.instance;
+  static const FlutterSecureStorage _localStorage = FlutterSecureStorage();
+  static final LocationProvider _locationProvider = LocationProvider();
 
   @override
   Widget build(BuildContext context) {
@@ -28,7 +31,10 @@ class App extends StatelessWidget {
       providers: [
         RepositoryProvider<Repository>(
           create: (context) => Repository(
-            supabaseClient: _supabaseClient,
+            firebaseAuth: _firebaseAuth,
+            firestore: _firestore,
+            storage: _storage,
+            functions: _functions,
             analytics: _analytics,
             localStorage: _localStorage,
             locationProvider: _locationProvider,
@@ -50,7 +56,7 @@ class App extends StatelessWidget {
             primaryColor: const Color(0xFFFFFFFF),
             appBarTheme: const AppBarTheme(
               centerTitle: true,
-              color: Colors.transparent,
+              backgroundColor: Colors.transparent,
               shadowColor: Colors.transparent,
               titleTextStyle: TextStyle(
                 fontSize: 16,
@@ -69,10 +75,13 @@ class App extends StatelessWidget {
               isDense: true,
             ),
             outlinedButtonTheme: OutlinedButtonThemeData(
-              style: OutlinedButton.styleFrom(primary: const Color(0xFFFFFFFF)),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: const Color(0xFFFFFFFF),
+                side: const BorderSide(color: Color(0xFFFFFFFF)),
+              ),
             ),
             snackBarTheme: SnackBarThemeData(
-              backgroundColor: const Color(0xFFFFFFFF).withOpacity(0.7),
+              backgroundColor: const Color(0xFFFFFFFF).withValues(alpha: 0.7),
               elevation: 10,
               behavior: SnackBarBehavior.floating,
               shape: RoundedRectangleBorder(
@@ -80,7 +89,7 @@ class App extends StatelessWidget {
               ),
             ),
           ),
-          localizationsDelegates: [
+          localizationsDelegates: const [
             GlobalMaterialLocalizations.delegate,
           ],
           navigatorObservers: [

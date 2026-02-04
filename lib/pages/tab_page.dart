@@ -218,10 +218,11 @@ class LifecycleEventHandler extends WidgetsBindingObserver {
     switch (state) {
       case AppLifecycleState.resumed:
         await resumeCallBack();
-        break;
       case AppLifecycleState.inactive:
       case AppLifecycleState.paused:
       case AppLifecycleState.detached:
+      case AppLifecycleState.hidden:
+
     }
   }
 }
@@ -232,8 +233,8 @@ class LifecycleEventHandler extends WidgetsBindingObserver {
 class RecordButton extends StatelessWidget {
   /// Button that opens `RecordPage`.
   const RecordButton({
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {

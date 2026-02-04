@@ -139,8 +139,6 @@ void main() {
       when(() => repository.signIn(
           email: 'sample@spotvideo.app',
           password: 'securepassword')).thenAnswer((_) => Future.value(''));
-      when(() => repository.setSessionString(''))
-          .thenAnswer((invocation) => Future.value());
       when(() => repository.profileStream)
           .thenAnswer((invocation) => Stream.value({}));
       when(repository.recoverSession)
@@ -187,8 +185,6 @@ void main() {
       when(() => repository.signUp(
           email: 'sample@spotvideo.app',
           password: 'securepassword')).thenAnswer((_) => Future.value(''));
-      when(() => repository.setSessionString(''))
-          .thenAnswer((invocation) => Future.value());
       when(() => repository.myProfile).thenReturn(null);
       when(() => repository.profileStream)
           .thenAnswer((invocation) => Stream.value({}));
@@ -232,8 +228,6 @@ void main() {
       when(() => repository.signIn(
               email: 'sample@spotvideo.app', password: 'securepassword'))
           .thenThrow(PlatformException(code: '', message: 'Login Error'));
-      when(() => repository.setSessionString(''))
-          .thenAnswer((invocation) => Future.value());
       when(() => repository.userId).thenReturn('aaa');
       when(() => repository.myProfile).thenReturn(null);
       when(() => repository.profileStream)

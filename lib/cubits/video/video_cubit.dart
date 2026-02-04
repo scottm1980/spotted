@@ -104,7 +104,7 @@ class VideoCubit extends Cubit<VideoState> {
 
   /// Delete this video. Can only be performed by the creator.
   Future<void> delete() {
-    return _repository.deleteVideo(videoId: _videoId);
+    return _repository.deleteVideo(_videoDetail!);
   }
 
   /// Share this video.

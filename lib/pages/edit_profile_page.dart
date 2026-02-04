@@ -98,7 +98,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 child: GestureDetector(
                   onTap: () async {
                     try {
-                      final pickedImage = await ImagePicker().getImage(
+                      final pickedImage = await ImagePicker().pickImage(
                         source: ImageSource.gallery,
                         maxWidth: 360,
                         maxHeight: 360,

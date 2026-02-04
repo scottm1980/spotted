@@ -1,4 +1,6 @@
-import 'package:google_maps_cluster_manager/google_maps_cluster_manager.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:geoflutterfire_plus/geoflutterfire_plus.dart';
+import 'package:google_maps_cluster_manager_2/google_maps_cluster_manager_2.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 import 'package:spot/models/profile.dart';
@@ -92,7 +94,7 @@ class Video with ClusterItem {
     );
   }
 
-  /// Converts a `Video` object to Map so that it can be saved to Supabase.
+  /// Converts a `Video` object to Map so that it can be saved to Firestore.
   Map<String, dynamic> toMap() {
     return {
       'url': url,
@@ -101,41 +103,57 @@ class Video with ClusterItem {
       'gif_url': gifUrl,
       'description': description,
       'user_id': userId,
+      'created_at': Timestamp.fromDate(createdAt),
       if (position != null)
-        'location': 'POINT(${position!.longitude} ${position!.latitude})',
+        'position':
+            GeoFirePoint(GeoPoint(position!.latitude, position!.longitude))
+                .data,
     };
   }
 
-  /// Converts raw data from Supabase to list of `Videos`.
+  /// Converts raw data from Firestore to list of `Videos`.
+  /// Note: This might need adjustments depending on how we fetch the data (e.g. QuerySnapshot)
   static List<Video> videosFromData({
     required List<dynamic> data,
     required String? userId,
   }) {
-    return data
-        .map<Video>((row) => Video(
-              id: row['id'] as String,
-              url: row['url'] as String,
-              imageUrl: row['image_url'] as String,
-              thumbnailUrl: row['thumbnail_url'] as String,
-              gifUrl: row['gif_url'] as String,
-              description: row['description'] as String,
-              userId: row['user_id'] as String,
-              position: row['location'] == null
-                  ? null
-                  : _locationFromPoint(row['location'] as String),
-              isFollowing: (userId == row['user_id'])
-                  ? true
-                  : (row['is_following'] ?? false) as bool,
-              createdAt: DateTime.parse(row['created_at'] as String),
-            ))
-        .toList();
+    return data.map<Video>((row) {
+      final map = row as Map<String, dynamic>;
+      // Handle Timestamp for createdAt
+      final createdAt = (map['created_at'] is Timestamp)
+          ? (map['created_at'] as Timestamp).toDate()
+          : DateTime.now();
+
+      // Handle GeoPoint for location
+      LatLng? position;
+      if (map['position'] != null && map['position']['geopoint'] is GeoPoint) {
+        // STANDARD geoflutterfire_plus structure
+        final geoPoint = map['position']['geopoint'] as GeoPoint;
+        position = LatLng(geoPoint.latitude, geoPoint.longitude);
+      } else if (map['location'] is GeoPoint) {
+        // Fallback or legacy
+        final geoPoint = map['location'] as GeoPoint;
+        position = LatLng(geoPoint.latitude, geoPoint.longitude);
+      }
+
+      return Video(
+        id: map['id'] as String? ?? '',
+        url: map['url'] as String? ?? '',
+        imageUrl: map['image_url'] as String? ?? '',
+        thumbnailUrl: map['thumbnail_url'] as String? ?? '',
+        gifUrl: map['gif_url'] as String? ?? '',
+        description: map['description'] as String? ?? '',
+        userId: map['user_id'] as String? ?? '',
+        position: position,
+        isFollowing: (userId == map['user_id'])
+            ? true
+            : (map['is_following'] ?? false) as bool,
+        createdAt: createdAt,
+      );
+    }).toList();
   }
 
-  static LatLng _locationFromPoint(String point) {
-    final splits =
-        point.replaceAll('POINT(', '').replaceAll(')', '').split(' ');
-    return LatLng(double.parse(splits.last), double.parse(splits.first));
-  }
+  // Removed _locationFromPoint as it was for Supabase POINT string format
 
   @override
   LatLng get location => position!;
@@ -219,38 +237,53 @@ class VideoDetail extends Video {
   /// e.g. NewYork, USA
   final String? locationString;
 
-  /// Converts raw data from Supabase to `VideoDetail`
+  /// Converts raw data from Firestore to `VideoDetail`
   static VideoDetail fromData({
     required Map<String, dynamic> data,
     required String? userId,
   }) {
+    // Handling joins manually in Repository, so data here might be constructed differently.
+    // Assuming data contains everything including profile info if we fetch it before calling this.
+
+    // Handle Timestamp
+    final createdAt = (data['created_at'] is Timestamp)
+        ? (data['created_at'] as Timestamp).toDate()
+        : DateTime.now(); // Fallback
+
+    // Handle GeoPoint
+    LatLng position = const LatLng(0, 0);
+    if (data['location'] is GeoPoint) {
+      final gp = data['location'] as GeoPoint;
+      position = LatLng(gp.latitude, gp.longitude);
+    }
+
     return VideoDetail(
-      id: data['id'] as String,
-      url: data['url'] as String,
-      imageUrl: data['image_url'] as String,
-      thumbnailUrl: data['thumbnail_url'] as String,
-      gifUrl: data['gif_url'] as String,
-      description: data['description'] as String,
-      userId: data['user_id'] as String,
+      id: data['id'] as String? ?? '',
+      url: data['url'] as String? ?? '',
+      imageUrl: data['image_url'] as String? ?? '',
+      thumbnailUrl: data['thumbnail_url'] as String? ?? '',
+      gifUrl: data['gif_url'] as String? ?? '',
+      description: data['description'] as String? ?? '',
+      userId: data['user_id'] as String? ?? '',
       isFollowing: (userId == data['user_id'])
           ? true
           : (data['is_following'] ?? false) as bool,
       createdBy: Profile(
-        id: data['user_id'] as String,
-        name: data['user_name'] as String,
+        id: data['user_id'] as String? ?? '',
+        name: data['user_name'] as String? ??
+            'Unknown', // Expecting these from manual join
         imageUrl: data['user_image_url'] as String?,
         description: data['user_description'] as String?,
       ),
-      position: Video._locationFromPoint(data['location'] as String),
-      createdAt: DateTime.parse(data['created_at'] as String),
-      likeCount: data['like_count'] as int,
-      commentCount: data['comment_count'] as int,
-      haveLiked: ((data['have_liked'] as int) > 0),
+      position: position,
+      createdAt: createdAt,
+      likeCount: data['like_count'] as int? ?? 0,
+      commentCount: data['comment_count'] as int? ?? 0,
+      haveLiked: (data['have_liked'] as bool? ?? false),
     );
   }
 
-  /// Creates a map to be saved to `likes` table in Supabase
-  /// when the logged in user liked a video.
+  /// Creates a map to be saved to `likes` collection in Firestore
   static Map<String, dynamic> like({
     required String videoId,
     required String uid,
@@ -258,6 +291,7 @@ class VideoDetail extends Video {
     return {
       'video_id': videoId,
       'user_id': uid,
+      'created_at': FieldValue.serverTimestamp(),
     };
   }
 

@@ -6,8 +6,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_feather_icons/flutter_feather_icons.dart';
-import 'package:google_maps_cluster_manager/google_maps_cluster_manager.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:google_maps_cluster_manager_2/google_maps_cluster_manager_2.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart'
+    hide Cluster, ClusterManager;
 import 'package:spot/components/gradient_border.dart';
 import 'package:spot/cubits/videos/videos_cubit.dart';
 import 'package:spot/models/video.dart';

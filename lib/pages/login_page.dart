@@ -383,13 +383,12 @@ class LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
             });
             final repository = RepositoryProvider.of<Repository>(context)
               ..statusKnown = Completer<void>();
-            final persistSessionString = await repository.signIn(
+            await repository.signIn(
                 email: _emailController.text,
                 password: _passwordController.text);
-            // Store current session
-            await repository.setSessionString(persistSessionString);
+
             await repository.statusKnown.future;
-            final myProfile = repository.myProfile;
+            final myProfile = await repository.getMyProfile();
             if (myProfile == null) {
               await Navigator.of(context).pushReplacement(
                   EditProfilePage.route(isCreatingAccount: true));
@@ -467,14 +466,9 @@ class LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
             setState(() {
               _isLoading = true;
             });
-            final persistSessionString =
-                await RepositoryProvider.of<Repository>(context).signUp(
-                    email: _emailController.text,
-                    password: _passwordController.text);
-
-            // Store current session
-            await RepositoryProvider.of<Repository>(context)
-                .setSessionString(persistSessionString);
+            await RepositoryProvider.of<Repository>(context).signUp(
+                email: _emailController.text,
+                password: _passwordController.text);
 
             await Navigator.of(context).pushReplacement(
                 EditProfilePage.route(isCreatingAccount: true));
